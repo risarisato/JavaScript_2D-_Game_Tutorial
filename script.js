@@ -1,3 +1,4 @@
+"use static"
 //全体をロードするイベントリスナー
 window.addEventListener('load', function(){
     // canvas1の設定
@@ -12,11 +13,14 @@ window.addEventListener('load', function(){
         constructor(game){
             this.game = game;
             window.addEventListener('keydown', e => {
-                //if(e.key === 'ArrowUp'){ ['ArrowUp', 'ArrowUp'…上矢印の長押しに対応しない
+                // if(e.key === 'ArrowUp'){ ['ArrowUp', 'ArrowUp'…上矢印の長押しに対応しない
                 if((    (e.key === 'ArrowUp') ||
                         (e.key === 'ArrowDown')
-                )&& this.game.keys.indexOf(e.key) === -1){
+                ) && this.game.keys.indexOf(e.key) === -1){
                     this.game.keys.push(e.key);
+                // 入力操作にスペースを追加して攻撃
+                } else if ( e.key === ' '){
+                    this.game.player.shootTop();
                 }
                     console.log(this.game.keys);
                 });
@@ -33,9 +37,26 @@ window.addEventListener('load', function(){
 
     }
 
-    // レーザー攻撃:発射物
+    // レーザー攻撃:発射物の準備
     class Projectile {
-
+        // 3つの引数が必要
+        constructor(game, x, y){
+            this.game = game;
+            this.x = x;
+            this.y = y;
+            this.width = 10;
+            this.height = 3;
+            this.speed = 3;
+            this.markedForDeletion = false;
+        }
+        update(){
+            this.x += this.speed;
+            if (this.x > this.game.width * 0.8) this.markedForDeletion = true;
+        }
+        draw(context){
+            context.fillStyle = 'yellow';
+            context.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
 
     // 粒子
@@ -55,8 +76,10 @@ window.addEventListener('load', function(){
             this.y = 100;
             // プレイヤー垂直速度初期値
             this.speedY = 0;
-            //フィールドに置いた値をY速度に「this.maxSpeed」持っていくテクニック
-            this.maxSpeed = 2;
+            // フィールドに置いた値をY速度に「this.maxSpeed」持っていくテクニック
+            this.maxSpeed = 3;
+            // 発射物の配列
+            this.projectiles = [];
         }
         // プレイヤーの垂直方向のY速度
         update(){
@@ -64,10 +87,31 @@ window.addEventListener('load', function(){
             else if (this.game.keys.includes('ArrowDown')) this.speedY = this.maxSpeed;
             else this.speedY = 0;
             this.y += this.speedY;
+            // 発射物の配列を取り出す＞呼び出す
+            this.projectiles.forEach(projectile => {
+                projectile.update();
+            });
+            // filter()で通過するすべての要素に新しい配列を提供する
+            this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion);
         }
         // context引数を外からもってくるやりかた＝ctx同じ
         draw(context){
+            context.fillStyle = 'black';//プレイヤーの色
             context.fillRect(this.x, this.y, this.width, this.height);
+            // 発射物の配列を取り出す＞呼び出す
+            this.projectiles.forEach(projectile => {
+                projectile.draw(context);
+            });
+        }
+        // 準備した発射物を攻撃できる
+        shootTop(){
+            // 弾薬を無制限で打てないようにする
+            if (this.game.ammo > 0){
+                this.projectiles.push(new Projectile(this.game, this.x + 80, this.y + 30 ));
+                console.log(this.projectiles);
+                this.game.ammo--;
+            }
+            console.log(this.projectiles);
         }
 
     }
@@ -87,8 +131,24 @@ window.addEventListener('load', function(){
 
     }
 
-    // タイマーや点数表示
+    // 弾薬数タイマーや点数表示
     class UI {
+        constructor(game){
+            // フィールド情報
+            this.game = game;
+            this.fontSize = 25;
+            this.fontFamily = 'Helvetica';
+            this.color = 'yellow';
+        }
+        // 弾薬表示する座標
+        draw(context){
+            context.fillStyle = this.color;
+            for (let i = 0; i < this.game.ammo; i++){
+                // 弾薬表示の20の位置から5フォント大きさで「i個」
+                context.fillRect( 20 + 5 * i, 50, 3, 20);
+            }
+
+        }
 
     }
 
@@ -97,29 +157,51 @@ window.addEventListener('load', function(){
         constructor(width, height){
             this.width = width;
             this.height = height;
-            this.Player = new Player(this);
+            this.player = new Player(this);
             this.input = new InputHandler(this)
+            //UIの弾薬表示をオブジェクト化
+            this.ui = new UI(this);
             //キーボード操作を配列に格納
             this.keys = [];
+            //弾薬関係
+            this.ammo = 20;// 弾薬数初期値
+            this.maxAmmo = 50; // 弾薬最大値
+            this.ammoTimer = 0; // 弾薬タイマー
+            this.ammoInterval = 500; // 弾薬インターバル
         }
-        update(){
-            this.Player.update();
+        update(deltaTime){
+            this.player.update();
+            // 弾薬の数が少ないときは回復する
+            if (this.ammoTimer > this.ammoInterval){
+                if (this.ammo < this.maxAmmo) this.ammo++
+                // そうでなければタイマーは0にする
+                this.ammoTimer = 0;
+            } else {
+                this.ammoTimer += deltaTime;
+            }
         }
         draw(context){
-            this.Player.draw(context);
+            // プレイヤーの呼び出し
+            this.player.draw(context);
+            // 弾薬表示の呼び出し
+            this.ui.draw(context);
         }
     }
     // すべてのクラスが実行されるmainになる
     const game = new Game(canvas.width, canvas.height);
+    let lastTime = 0;// 前回の弾薬補充カウント数
 
     // アニメーションループ
-    function animate() {
-        //アニメーションがクリアされる
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        game.update();
+    function animate(timeStamp) {
+        // 弾薬が前回から今回を差し引く
+        const deltaTime = timeStamp - lastTime;
+        // console.log(deltaTime);
+        lastTime = timeStamp;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);// アニメーションがクリアされる
+        game.update(deltaTime);// game.update()に引数deltaTimeを入れる
         game.draw(ctx);
         requestAnimationFrame(animate);
     }
-    animate();
+    animate(0);// animate(0)引数に「0」を入れる
 
 });
