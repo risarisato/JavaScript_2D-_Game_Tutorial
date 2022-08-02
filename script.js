@@ -3,12 +3,12 @@ window.addEventListener('load', function(){
     // canvas1の設定
     const canvas = document.getElementById('canvas1');
     const ctx = canvas.getContext('2d');
-    // cssで固定画面サイズに対応させている
+    // cssで固定画面サイズに対応させているs
     canvas.width = 500;
     canvas.height = 500;
 
     // キーボード操作入力
-    class InputHandler {
+    class InputHandler {asdf
         constructor(game){
             this.game = game;
             window.addEventListener('keydown', e => {
