@@ -1,4 +1,3 @@
-"use static"
 //全体をロードするイベントリスナー
 window.addEventListener('load', function(){
     // canvas1の設定
@@ -116,8 +115,32 @@ window.addEventListener('load', function(){
 
     }
 
-    // 敵キャラクター
+    // 敵キャラクター(親super)
     class Enemy {
+        constructor(game){
+            this.game = game;
+            this.x = this.game.width;// 敵はX軸方向から来襲
+            this.speedX = Math.random() * -1.5 -0.5;
+            this.markedForDeletion = false;// レーザに当たるとfalse
+        }
+        update(){// 敵の水平X軸を調整する
+            this.x += this.speedX;
+            if(this.x + this.width < 0) this.markedForDeletion = true;
+        }
+        draw(context){
+            context.fillStyle = 'red';
+            context.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+    // 継承関係の敵キャラクター(子sub)オーバライド
+    // 同メソッド再宣言して、継承されている場所を自動探し、コードの繰り返しを減らす
+    class Angler1 extends Enemy {
+        constructor(game){
+            super(game);
+            this.width = 228 * 0.2; //大きさは調整
+            this.height = 169 * 0.2;
+            this.y = Math.random() * (this.game.height * 0.9 - this.height);
+        }
 
     }
 
@@ -159,15 +182,22 @@ window.addEventListener('load', function(){
             this.height = height;
             this.player = new Player(this);
             this.input = new InputHandler(this)
-            //UIの弾薬表示をオブジェクト化
-            this.ui = new UI(this);
-            //キーボード操作を配列に格納
-            this.keys = [];
-            //弾薬関係
+
+            this.ui = new UI(this);//UIの弾薬表示をオブジェクト化
+            this.keys = [];//キーボード操作を配列に格納
+
+            //敵の出現は同じもの使用する「弾薬の間隔」があるので
+            this.enemies = [];// 敵クラスの配列を宣言
+            this.enemyTimer = 0;// 敵の初期時間は0
+            this.enemyInterval = 1000;// 敵のインターバル１秒
+
+
             this.ammo = 20;// 弾薬数初期値
             this.maxAmmo = 50; // 弾薬最大値
             this.ammoTimer = 0; // 弾薬タイマー
             this.ammoInterval = 500; // 弾薬インターバル
+
+            this.gameOver = false;
         }
         update(deltaTime){
             this.player.update();
@@ -179,12 +209,33 @@ window.addEventListener('load', function(){
             } else {
                 this.ammoTimer += deltaTime;
             }
+            // 敵クラスとレーザーの関係
+            this.enemies.forEach(enemy => {
+                enemy.update();
+            });
+            // filterはレーザの攻撃で、敵がどうなったかフィルター、敵インターバル
+            this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
+            if(this.enemyTimer > this.enemyInterval && !this.gameOver){
+                this.addEnemy();
+                this.enemyTimer = 0;
+            } else {
+                this.enemyTimer += deltaTime;
+            }
         }
         draw(context){
             // プレイヤーの呼び出し
             this.player.draw(context);
             // 弾薬表示の呼び出し
             this.ui.draw(context);
+            // 敵クラスの呼び出し
+            this.enemies.forEach(enemy => {
+                enemy.draw(context);
+            });
+        }
+        // 親super敵クラスの子クラスを呼ぶnew
+        addEnemy(){
+            this.enemies.push(new Angler1(this));// このthisはGameを呼び出し
+            console.log(this.enemies);
         }
     }
     // すべてのクラスが実行されるmainになる
