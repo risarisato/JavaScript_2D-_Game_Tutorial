@@ -1,5 +1,9 @@
 # JavaScript_2D_Game_Tutorial
 
+Counting game time スコア、攻撃判定、敵ライフやカウントダウン制
+image.png
+vscodeでスクショを貼り付けテスト→githubにプルリク
+
 Base enemy class 敵の表記とクラス拡張
 ![image](https://user-images.githubusercontent.com/88628553/182340250-cc34f343-8d3d-43c4-a0bc-a2efe1299117.png)
 

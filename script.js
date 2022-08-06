@@ -122,6 +122,8 @@ window.addEventListener('load', function(){
             this.x = this.game.width;// 敵はX軸方向から来襲
             this.speedX = Math.random() * -1.5 -0.5;
             this.markedForDeletion = false;// レーザに当たるとfalse
+            this.lives = 5;// 敵のライフが5
+            this.score = this.lives;// 敵ライフ5と点数5が等しい関係
         }
         update(){// 敵の水平X軸を調整する
             this.x += this.speedX;
@@ -130,6 +132,10 @@ window.addEventListener('load', function(){
         draw(context){
             context.fillStyle = 'red';
             context.fillRect(this.x, this.y, this.width, this.height);
+            //敵ライフを視覚的に見えるようにする
+            context.fillStyle = 'black';
+            context.font = '20px Helvatica';
+            context.fillText(this.lives, this.x, this.y);
         }
     }
     // 継承関係の敵キャラクター(子sub)オーバライド
@@ -154,7 +160,7 @@ window.addEventListener('load', function(){
 
     }
 
-    // 弾薬数タイマーや点数表示
+    // 弾薬数タイマーやカウントダウンを表示
     class UI {
         constructor(game){
             // フィールド情報
@@ -163,16 +169,52 @@ window.addEventListener('load', function(){
             this.fontFamily = 'Helvetica';
             this.color = 'yellow';
         }
-        // 弾薬表示する座標
+        // 弾薬・スコア点数を描く
         draw(context){
+            context.save();// スコープ内のcontextだけ影を開始＞＞敵ライフ「5」に影なし
+            context.fillStyle = this.color;
+            context.shadowOffsetX = 1.5;//影をつけている
+            context.shadowOffsetY = 2;//影をつけている
+            context.shadowColor = 'black';
+
+            // スコア点数表示
+            context.font = this.fontSize + 'px' + this.fontFamily;
+            context.fillText('Score: ' + this.game.score, 20, 40);
+            context.fillText('弾数: ', 140, 40);
+
+
+            // レーザ発射物の残数
             context.fillStyle = this.color;
             for (let i = 0; i < this.game.ammo; i++){
-                // 弾薬表示の20の位置から5フォント大きさで「i個」
+                // (20, 50)開始位置です。幅は 3 で高さは 20 です。
+                // (20 + 5 * i), (50), (3), (20)→カンマ区切り
                 context.fillRect( 20 + 5 * i, 50, 3, 20);
+                //context.fillText(i , 180, 40);→残数の表示がおかしい
             }
 
-        }
+            // ゲームカウントダウン
+            const formattedTime = (this.game.gameTime * 0.001).toFixed(1);// 小数点で表示
+            context.fillText('Timer: ' + formattedTime, 20, 90);// タイマーを表示させる座標
 
+            // ゲームが終わった時のメッセージ
+            if (this.game.gameOver){
+                context.textAlin = 'center';
+                let message1;
+                let message2;
+                if (this.game.score > this.game.winningScore){
+                    message1 = 'You win!';
+                    message2 = '点数：' + this.game.score + 'です！'
+                } else {
+                    message1 = 'You lose!';
+                    message2 = 'Try again next time!';
+                }
+                context.font = '50px ' + this.fontFamily;
+                context.fillText(message1, this.game.width * 0.5, this.game.height * 0.5 - 40);
+                context.font = '25px ' + this.fontFamily;
+                context.fillText(message2, this.game.width * 0.5, this.game.height * 0.5 + 40);
+            }
+            context.restore();// スコープ内のcontextだけ影を終了
+        }
     }
 
     // すべてのクラスが呼び出される場所
@@ -198,8 +240,18 @@ window.addEventListener('load', function(){
             this.ammoInterval = 500; // 弾薬インターバル
 
             this.gameOver = false;
+
+            this.score = 0; // スコア点数の初期値
+            this.winningScore = 10; // 勝利スコア
+
+            // ゲームをカウントダウンで終了するゲームにする
+            this.gameTime = 0;
+            this.timeLimit = 7000;
         }
+        // 更新する＞＞動くようにみえるところ
         update(deltaTime){
+            if (!this.gameOver) this.gameTime += deltaTime;// ゲームをカウントダウン
+            if (this.gameTime > this.timeLimit) this.gameOver = true;// ゲームをカウントダウン
             this.player.update();
             // 弾薬の数が少ないときは回復する
             if (this.ammoTimer > this.ammoInterval){
@@ -212,6 +264,23 @@ window.addEventListener('load', function(){
             // 敵クラスとレーザーの関係
             this.enemies.forEach(enemy => {
                 enemy.update();
+                // 当たり判定、長方形(プレイヤー)の大きさに含まれるかどうか
+                if (this.checkCollsion(this.player, enemy)){
+                    enemy.markedForDeletion = true;
+                }
+                // 当たり判定、レーザ発射物と敵
+                this.player.projectiles.forEach(projectile => {
+                    if (this.checkCollsion(projectile, enemy)){
+                        enemy.lives--;
+                        projectile.markedForDeletion = true;
+                        if (enemy.lives <= 0){
+                            enemy.markedForDeletion = true;
+                            //this.score+= enemy.score;// カウント完了後に敵を倒しても点数加算される
+                            if (!this.gameOver) this.score += enemy.score;// カウント完了後に敵を倒しても点数加算されない
+                            if (this.score > this.winningScore) this.gameOver = true;
+                        }
+                    }
+                })
             });
             // filterはレーザの攻撃で、敵がどうなったかフィルター、敵インターバル
             this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
@@ -235,7 +304,14 @@ window.addEventListener('load', function(){
         // 親super敵クラスの子クラスを呼ぶnew
         addEnemy(){
             this.enemies.push(new Angler1(this));// このthisはGameを呼び出し
-            console.log(this.enemies);
+            // console.log(this.enemies);
+        }
+        // 当たり判定、長方形(プレイヤー)の大きさに含まれるかどうか
+        checkCollsion(recr1, rect2){
+            return(     recr1.x < rect2.x + rect2.width &&
+                        recr1.x + recr1.width > rect2.x &&
+                        recr1.y < rect2.y + rect2.height &&
+                        recr1.height + recr1.y > rect2.y     )
         }
     }
     // すべてのクラスが実行されるmainになる
