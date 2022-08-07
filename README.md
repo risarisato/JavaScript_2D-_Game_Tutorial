@@ -1,5 +1,12 @@
 # JavaScript_2D_Game_Tutorial
 
+Animated parallax backgrounds_s_背景をレイヤーで動かし視差を無くした
+![image](https://user-images.githubusercontent.com/88628553/183275899-5ec89170-29b6-40ec-a7a0-28430566a375.png)
+
+- レイヤー4を最前列へ持ってきた。
+![image](https://user-images.githubusercontent.com/88628553/183275917-ca3fc808-d44f-4da2-aaec-0685ff77cec5.png)
+
+
 Counting game time スコア、攻撃判定、敵ライフやカウントダウン制
 ![image](https://user-images.githubusercontent.com/88628553/183232648-4a367a43-b4be-4b9c-b757-bcbc5939df0f.png)
 
