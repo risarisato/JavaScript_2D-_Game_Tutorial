@@ -110,7 +110,7 @@ window.addEventListener('load', function(){
                 console.log(this.projectiles);
                 this.game.ammo--;
             }
-            console.log(this.projectiles);
+            //console.log(this.projectiles);
         }
 
     }
@@ -150,14 +150,57 @@ window.addEventListener('load', function(){
 
     }
 
-    // 視差レイヤー
+    // レイヤーオブジェクトの設定するクラス
     class Layer {
-
+        constructor(game, image, speedModifier){
+            this.game = game;
+            this.image = image;
+            this.speedModifier = speedModifier;
+            this.width = 1768;// 背景画像大きさ
+            this.height = 500;
+            this.x = 0;// 背景画像の開始座標
+            this.y = 0;
+        }
+        update(){
+            // 更新＞画像の動き方＞画像が左から右へ
+            if(this.x <= -this.width)
+            // 再びスクロールできるように「0」
+            this.x = 0;
+            // それ以外は、Xをゲーム速度倍に減らす視差
+            //else this.x -= this.game.speed * this.speedModifier;
+            this.x -= this.game.speed * this.speedModifier;// 画面端っこをスムーズにする
+        }
+        // レイヤーを描く
+        draw(context){
+            context.drawImage(this.image, this.x, this.y);
+            //2番目に同一の画像を書くことでシームレスになる
+            context.drawImage(this.image, this.x + this.width, this.y);
+        }
     }
 
-    // 全体をアニメーション化
+    // 各レイヤー背景クラスを処理するクラス
     class Background {
-
+        constructor(game){
+            this.game = game;
+            // javascriptでのhtmlを呼び出すID＝layer1
+            this.image1 = document.getElementById('layer1');
+            this.image2 = document.getElementById('layer2');
+            this.image3 = document.getElementById('layer3');
+            this.image4 = document.getElementById('layer4');
+            this.layer1 = new Layer(this.game, this.image1, 0.2);
+            this.layer2 = new Layer(this.game, this.image2, 0.4);
+            this.layer3 = new Layer(this.game, this.image3, 1);
+            this.layer4 = new Layer(this.game, this.image4, 1.5);
+            //this.layers = [this.layer1, this.layer2, this.layer3, this.layer4];
+            // レイヤー4を同一に表示させない
+            this.layers = [this.layer1, this.layer2, this.layer3];
+        }
+        update(){
+            this.layers.forEach(layer => layer.update());
+        }
+        draw(context){
+            this.layers.forEach(layer => layer.draw(context));
+        }
     }
 
     // 弾薬数タイマーやカウントダウンを表示
@@ -222,6 +265,10 @@ window.addEventListener('load', function(){
         constructor(width, height){
             this.width = width;
             this.height = height;
+
+            // レイヤー設定したバックグラウンドをオブジェクト化
+            this.background = new Background(this);
+
             this.player = new Player(this);
             this.input = new InputHandler(this)
 
@@ -232,7 +279,6 @@ window.addEventListener('load', function(){
             this.enemies = [];// 敵クラスの配列を宣言
             this.enemyTimer = 0;// 敵の初期時間は0
             this.enemyInterval = 1000;// 敵のインターバル１秒
-
 
             this.ammo = 20;// 弾薬数初期値
             this.maxAmmo = 50; // 弾薬最大値
@@ -247,12 +293,18 @@ window.addEventListener('load', function(){
             // ゲームをカウントダウンで終了するゲームにする
             this.gameTime = 0;
             this.timeLimit = 7000;
+
+            this.speed = 1; // 背景バックグラウンド速度
         }
         // 更新する＞＞動くようにみえるところ
         update(deltaTime){
             if (!this.gameOver) this.gameTime += deltaTime;// ゲームをカウントダウン
             if (this.gameTime > this.timeLimit) this.gameOver = true;// ゲームをカウントダウン
             this.player.update();
+
+            this.background.update();// レイヤー設定したバックグラウンドを更新
+            this.background.layer4.update();// レイヤー4設定したバックグラウンドを更新
+
             // 弾薬の数が少ないときは回復する
             if (this.ammoTimer > this.ammoInterval){
                 if (this.ammo < this.maxAmmo) this.ammo++
@@ -291,7 +343,10 @@ window.addEventListener('load', function(){
                 this.enemyTimer += deltaTime;
             }
         }
+        // 描く順番に注意！上書き：背景＞プレイヤー＝UI＝敵＞レイヤー4
         draw(context){
+            // レイヤー設定したバックグラウンドを描く
+            this.background.draw(context);
             // プレイヤーの呼び出し
             this.player.draw(context);
             // 弾薬表示の呼び出し
@@ -300,6 +355,8 @@ window.addEventListener('load', function(){
             this.enemies.forEach(enemy => {
                 enemy.draw(context);
             });
+            // レイヤー4を最前列で呼び出す
+            this.background.layer4.draw(context);
         }
         // 親super敵クラスの子クラスを呼ぶnew
         addEnemy(){
