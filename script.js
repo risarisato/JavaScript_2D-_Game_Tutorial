@@ -21,7 +21,7 @@ window.addEventListener('load', function(){
                 } else if ( e.key === ' '){
                     this.game.player.shootTop();
                 }
-                    console.log(this.game.keys);
+                    //console.log(this.game.keys);
                 });
             //上記で「上矢印」で配列に格納されたArrowUpのみspliceで切り取る
             // ['ArrowUp', 'ArrowUp', 'ArrowUp', 'ArrowUp', …となってしまう]
@@ -29,7 +29,7 @@ window.addEventListener('load', function(){
                 if(this.game.keys.indexOf(e.key) > -1){
                    this.game.keys.splice(this.game.keys.indexOf(e.key), 1);
                 }
-                console.log(this.game.keys);
+                //console.log(this.game.keys);
             });
 
         }
@@ -73,12 +73,19 @@ window.addEventListener('load', function(){
             // プレイヤー位置
             this.x = 20;
             this.y = 100;
+
+            this.frameX = 0; // スプライトシートを循環する水平方向X[0]が行を決定
+            this.frameY = 0; // スプライトシートを循環する水平方向Y[0]が列を決定
+            this.maxFrame = 37; // スプライトシートのフレーム37
+
             // プレイヤー垂直速度初期値
             this.speedY = 0;
             // フィールドに置いた値をY速度に「this.maxSpeed」持っていくテクニック
             this.maxSpeed = 3;
             // 発射物の配列
             this.projectiles = [];
+
+            this.image = document.getElementById('player');
         }
         // プレイヤーの垂直方向のY速度
         update(){
@@ -92,11 +99,25 @@ window.addEventListener('load', function(){
             });
             // filter()で通過するすべての要素に新しい配列を提供する
             this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion);
+
+            // スプライトをアニメーションフレームにする
+            // maxFrame37まで＋＋して、それ以外は「0」に戻す→forで繰り返してない
+            if(this.frameX < this.maxFrame){
+                this.frameX++;
+            } else {
+                this.frameX = 0;
+            }
         }
         // context引数を外からもってくるやりかた＝ctx同じ
         draw(context){
             context.fillStyle = 'black';//プレイヤーの色
             context.fillRect(this.x, this.y, this.width, this.height);
+            // プレイヤー画像を持ってくる
+            //context.drawImage(this.image, this.x, this.y);// 1枚シート全体
+            //context.drawImage(this.image, this.x, this.y, this.width, this.height); 1枚シートを120×190の大きさでを座標20．100から表示
+            //context.drawImage(this.image, sx, sy, sw, sh, this.x, this.y, this.width, this.height); sx,sy,sw,shの紹介
+            context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height,
+                this.width, this.height, this.x, this.y, this.width, this.height);
             // 発射物の配列を取り出す＞呼び出す
             this.projectiles.forEach(projectile => {
                 projectile.draw(context);
@@ -107,7 +128,7 @@ window.addEventListener('load', function(){
             // 弾薬を無制限で打てないようにする
             if (this.game.ammo > 0){
                 this.projectiles.push(new Projectile(this.game, this.x + 80, this.y + 30 ));
-                console.log(this.projectiles);
+                //console.log(this.projectiles);
                 this.game.ammo--;
             }
             //console.log(this.projectiles);
