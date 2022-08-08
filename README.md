@@ -1,5 +1,13 @@
 # JavaScript_2D_Game_Tutorial
 
+Sprite animation with JavaScript_プレイヤーを描画する
+-PNGスプライトシートの考え方
+![image](https://user-images.githubusercontent.com/88628553/183400717-d48e88f6-f588-4150-a644-665604399763.png)
+
+-PNGスプライトシートを読み込んで中の高さ・幅の考え方
+![image](https://user-images.githubusercontent.com/88628553/183400615-b0397518-e6e1-430a-a166-059337f3a508.png)
+
+
 Animated parallax backgrounds_s_背景をレイヤーで動かし視差を無くした
 ![image](https://user-images.githubusercontent.com/88628553/183275899-5ec89170-29b6-40ec-a7a0-28430566a375.png)
 
