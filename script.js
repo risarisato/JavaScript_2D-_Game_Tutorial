@@ -20,9 +20,10 @@ window.addEventListener('load', function(){
                 // 入力操作にスペースを追加して攻撃
                 } else if ( e.key === ' '){
                     this.game.player.shootTop();
+                } else if ( e.key === 'd'){
+                    this.game.debug = !this.game.debug;
                 }
-                    //console.log(this.game.keys);
-                });
+            });
             //上記で「上矢印」で配列に格納されたArrowUpのみspliceで切り取る
             // ['ArrowUp', 'ArrowUp', 'ArrowUp', 'ArrowUp', …となってしまう]
             window.addEventListener('keyup', e =>{
@@ -110,8 +111,12 @@ window.addEventListener('load', function(){
         }
         // context引数を外からもってくるやりかた＝ctx同じ
         draw(context){
-            context.fillStyle = 'black';//プレイヤーの色
-            context.fillRect(this.x, this.y, this.width, this.height);
+            //context.fillStyle = 'black';//プレイヤーの色→strokeRectでいらない
+            //context.fillRect(this.x, this.y, this.width, this.height);塗りつぶし
+
+            //デバッグモードの枠線
+            if(this.game.debug)
+            context.strokeRect(this.x, this.y, this.width, this.height); // 枠線だけ
             // プレイヤー画像を持ってくる
             //context.drawImage(this.image, this.x, this.y);// 1枚シート全体
             //context.drawImage(this.image, this.x, this.y, this.width, this.height); 1枚シートを120×190の大きさでを座標20．100から表示
@@ -316,6 +321,7 @@ window.addEventListener('load', function(){
             this.timeLimit = 7000;
 
             this.speed = 1; // 背景バックグラウンド速度
+            this.debug = true;
         }
         // 更新する＞＞動くようにみえるところ
         update(deltaTime){
