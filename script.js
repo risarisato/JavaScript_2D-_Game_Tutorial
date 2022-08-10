@@ -8,7 +8,7 @@ window.addEventListener('load', function(){
     canvas.height = 500;
 
     // キーボード操作入力
-    class InputHandler {asdf
+    class InputHandler {
         constructor(game){
             this.game = game;
             window.addEventListener('keydown', e => {
