@@ -4,11 +4,11 @@ window.addEventListener('load', function(){
     const canvas = document.getElementById('canvas1');
     const ctx = canvas.getContext('2d');
     // cssで固定画面サイズに対応させているs
-    canvas.width = 500;
+    canvas.width = 700;
     canvas.height = 500;
 
     // キーボード操作入力
-    class InputHandler {asdf
+    class InputHandler {
         constructor(game){
             this.game = game;
             window.addEventListener('keydown', e => {
@@ -148,32 +148,88 @@ window.addEventListener('load', function(){
             this.x = this.game.width;// 敵はX軸方向から来襲
             this.speedX = Math.random() * -1.5 -0.5;
             this.markedForDeletion = false;// レーザに当たるとfalse
-            this.lives = 5;// 敵のライフが5
-            this.score = this.lives;// 敵ライフ5と点数5が等しい関係
+            //this.lives = 5;// 敵のライフが5
+            //this.score = this.lives;// 敵ライフ5と点数5が等しい関係
+
+            // 敵キャラクター座標とフレーム初期値
+            this.frameX = 0;
+            this.frameY = 0;
+            this.maxFrame = 37;
         }
         update(){// 敵の水平X軸を調整する
-            this.x += this.speedX;
+            //this.x += this.speedX;
+            this.x += this.speedX - this.game.speed;
             if(this.x + this.width < 0) this.markedForDeletion = true;
+
+            //敵のアニメーション
+            if(this.frameX < this.maxFrame){
+                this.frameX++;
+            } else this.frameX = 0;
         }
         draw(context){
-            context.fillStyle = 'red';
-            context.fillRect(this.x, this.y, this.width, this.height);
+            // プレイヤーの塗りつぶしと同じ考え
+            //context.fillStyle = 'red';
+            //context.fillRect(this.x, this.y, this.width, this.height);
+
+            if(this.game.debug)//プレイヤーと同じくデバッグモードを敵に追加
+            // 敵キャラクターが四角枠だけになる
+            context.strokeRect(this.x, this.y, this.width, this.height);
+            // 敵キャラクターを大きなスプライトシートで1枚で読み込む
+            //context.drawImage(this.image, this.x, this.y);
+            // 1枚シートを228×169の大きさでを全体を表示
+            //context.drawImage(this.image, this.x, this.y, this.width, this.height);
+            // sx,sy,sw,shの紹介
+            //context.drawImage(this.image, sx, sy, sw, sh, this.x, this.y, this.width, this.height);
+            context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height,
+                this.width, this.height, this.x, this.y, this.width, this.height);
+            //context.drawImage(this.image, this.x, this.y);
             //敵ライフを視覚的に見えるようにする
-            context.fillStyle = 'black';
+            //context.fillStyle = 'black'; デフォルトで黒らしい
             context.font = '20px Helvatica';
             context.fillText(this.lives, this.x, this.y);
         }
     }
-    // 継承関係の敵キャラクター(子sub)オーバライド
+    // 継承関係の敵キャラクター(Angler1)オーバライド
     // 同メソッド再宣言して、継承されている場所を自動探し、コードの繰り返しを減らす
     class Angler1 extends Enemy {
         constructor(game){
             super(game);
-            this.width = 228 * 0.2; //大きさは調整
-            this.height = 169 * 0.2;
+            this.width = 228; //* 0.2; 大きさは調整したときの残り
+            this.height = 169; //* 0.2;
             this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.image = document.getElementById('angler1');
+            this.frameY = Math.floor(Math.random() * 3);
+            this.lives = 2;
+            this.score = this.lives;
         }
-
+    }
+    // 継承関係の敵キャラクター(Angler2)オーバライド
+    // 親クラスで書いているので楽なる
+    class Angler2 extends Enemy {
+        constructor(game){
+            super(game);
+            this.width = 213;
+            this.height = 165;
+            this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.image = document.getElementById('angler2');
+            this.frameY = Math.floor(Math.random() * 2);
+            this.lives = 3;
+            this.score = this.lives;
+        }
+    }
+    // 継承関係の敵キャラクター(LuckyFish)オーバライド
+    class LuckyFish extends Enemy {
+        constructor(game){
+            super(game);
+            this.width = 99;
+            this.height = 95;
+            this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.image = document.getElementById('lucky');
+            this.frameY = Math.floor(Math.random() * 2);
+            this.lives = 3;
+            this.score = 15;
+            this.type = 'lucky';
+        }
     }
 
     // レイヤーオブジェクトの設定するクラス
@@ -318,7 +374,7 @@ window.addEventListener('load', function(){
 
             // ゲームをカウントダウンで終了するゲームにする
             this.gameTime = 0;
-            this.timeLimit = 7000;
+            this.timeLimit = 15000;
 
             this.speed = 1; // 背景バックグラウンド速度
             this.debug = true;
@@ -387,7 +443,12 @@ window.addEventListener('load', function(){
         }
         // 親super敵クラスの子クラスを呼ぶnew
         addEnemy(){
-            this.enemies.push(new Angler1(this));// このthisはGameを呼び出し
+            const randomize = Math.random();
+            // 0.5のAngler1を出現させて
+            if(randomize < 0.3) this.enemies.push(new Angler1(this));
+            // それ以外はAngler2になる
+            else if (randomize < 0.6)this.enemies.push(new Angler2(this));
+            else this.enemies.push(new LuckyFish(this));
             // console.log(this.enemies);
         }
         // 当たり判定、長方形(プレイヤー)の大きさに含まれるかどうか
