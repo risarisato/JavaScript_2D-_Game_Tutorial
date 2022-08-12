@@ -1,5 +1,13 @@
 # JavaScript_2D_Game_Tutorial
 
+-オブジェクト指向の良い例
+![image](https://user-images.githubusercontent.com/88628553/184268984-115bb08c-7701-429e-8e88-94b2a0462064.png)
+
+
+-敵キャラクター出現の仕方
+![image](https://user-images.githubusercontent.com/88628553/184268831-461aaaab-b117-42b3-9ccb-1d2e3b5a5991.png)
+
+
 Sprite animation with JavaScript_プレイヤーを描画する
 -PNGスプライトシートの考え方
 ![image](https://user-images.githubusercontent.com/88628553/183400717-d48e88f6-f588-4150-a644-665604399763.png)
