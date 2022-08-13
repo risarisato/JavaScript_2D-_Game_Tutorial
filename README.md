@@ -1,5 +1,14 @@
 # JavaScript_2D_Game_Tutorial
 
+-発射物レーザの描画
+![image](https://user-images.githubusercontent.com/88628553/184477691-10c0a2fe-2059-4b17-834e-28ab02c4d997.png)
+
+
+-パワーアップ
+![image](https://user-images.githubusercontent.com/88628553/184477612-109eb614-d7b5-4c07-b19f-08ff3c157568.png)
+![image](https://user-images.githubusercontent.com/88628553/184477648-3ab28cdb-bf6f-4b1c-8b15-ca7b9b74ec8f.png)
+
+
 -オブジェクト指向の良い例
 ![image](https://user-images.githubusercontent.com/88628553/184268984-115bb08c-7701-429e-8e88-94b2a0462064.png)
 
