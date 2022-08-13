@@ -86,10 +86,15 @@ window.addEventListener('load', function(){
             // 発射物の配列
             this.projectiles = [];
 
+            // パワーアップの定義
+            this.powerUp = false; // 最初はパワーアップしない
+            this.powerUpTimer = 0;
+            this.powerUpLimit = 10000;
+
             this.image = document.getElementById('player');
         }
         // プレイヤーの垂直方向のY速度
-        update(){
+        update(deltaTime){
             if (this.game.keys.includes('ArrowUp')) this.speedY = -this.maxSpeed;
             else if (this.game.keys.includes('ArrowDown')) this.speedY = this.maxSpeed;
             else this.speedY = 0;
@@ -108,6 +113,18 @@ window.addEventListener('load', function(){
             } else {
                 this.frameX = 0;
             }
+            // プレイヤーのpowerアップ
+            if(this.powerUp){
+                if(this.powerUpTimer > this.powerUpLimit){
+                    this.powerUpTimer = 0;
+                    this.powerUp = false;
+                    this.frameY = 0;
+                } else {
+                    this.powerUpTimer += deltaTime;
+                    this.frameY = 1;
+                    this.game.ammo += 0.1;
+                }
+            }
         }
         // context引数を外からもってくるやりかた＝ctx同じ
         draw(context){
@@ -117,6 +134,11 @@ window.addEventListener('load', function(){
             //デバッグモードの枠線
             if(this.game.debug)
             context.strokeRect(this.x, this.y, this.width, this.height); // 枠線だけ
+            // 発射物の配列を取り出す＞呼び出す
+            this.projectiles.forEach(projectile => {
+                projectile.draw(context);
+            });
+
             // プレイヤー画像を持ってくる
             //context.drawImage(this.image, this.x, this.y);// 1枚シート全体
             //context.drawImage(this.image, this.x, this.y, this.width, this.height); 1枚シートを120×190の大きさでを座標20．100から表示
@@ -124,9 +146,9 @@ window.addEventListener('load', function(){
             context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height,
                 this.width, this.height, this.x, this.y, this.width, this.height);
             // 発射物の配列を取り出す＞呼び出す
-            this.projectiles.forEach(projectile => {
-                projectile.draw(context);
-            });
+            //this.projectiles.forEach(projectile => {
+            //    projectile.draw(context);
+            //});
         }
         // 準備した発射物を攻撃できる
         shootTop(){
@@ -137,6 +159,20 @@ window.addEventListener('load', function(){
                 this.game.ammo--;
             }
             //console.log(this.projectiles);
+            if (this.powerUp) this.shootBottom();
+        }
+        // パワーアップして、下からも打てる
+        shootBottom(){
+            if (this.game.ammo > 0){
+                this.projectiles.push(new Projectile(this.game, this.x + 80, this.y + 175 ));
+            }
+            //console.log(this.projectiles);
+        }
+        // プレイヤーのpowerアップ
+        enterPowerUp(){
+            this.powerUpTimer = 0;
+            this.powerUp = true;
+            this.game.ammo = this.game.maxAmmo;
         }
 
     }
@@ -308,15 +344,16 @@ window.addEventListener('load', function(){
             context.fillText('弾数: ', 140, 40);
 
 
-            // レーザ発射物の残数
+            /* レーザ発射物の残数
             context.fillStyle = this.color;
+            if(this.game.player.powerUp) context.fillStyle = '#efffbd';// パワーアップ時の表示の色
             for (let i = 0; i < this.game.ammo; i++){
                 // (20, 50)開始位置です。幅は 3 で高さは 20 です。
                 // (20 + 5 * i), (50), (3), (20)→カンマ区切り
                 context.fillRect( 20 + 5 * i, 50, 3, 20);
                 //context.fillText(i , 180, 40);→残数の表示がおかしい
             }
-
+            */
             // ゲームカウントダウン
             const formattedTime = (this.game.gameTime * 0.001).toFixed(1);// 小数点で表示
             context.fillText('Timer: ' + formattedTime, 20, 90);// タイマーを表示させる座標
@@ -337,6 +374,15 @@ window.addEventListener('load', function(){
                 context.fillText(message1, this.game.width * 0.5, this.game.height * 0.5 - 40);
                 context.font = '25px ' + this.fontFamily;
                 context.fillText(message2, this.game.width * 0.5, this.game.height * 0.5 + 40);
+            }
+            // レーザ発射物の残数がパワーアップ時の色が変更される
+            context.fillStyle = this.color;
+            if(this.game.player.powerUp) context.fillStyle = 'red';// パワーアップ時の表示の色
+            for (let i = 0; i < this.game.ammo; i++){
+                // (20, 50)開始位置です。幅は 3 で高さは 20 です。
+                // (20 + 5 * i), (50), (3), (20)→カンマ区切り
+                context.fillRect( 20 + 5 * i, 50, 3, 20);
+                //context.fillText(i , 180, 40);→残数の表示がおかしい
             }
             context.restore();// スコープ内のcontextだけ影を終了
         }
@@ -383,7 +429,7 @@ window.addEventListener('load', function(){
         update(deltaTime){
             if (!this.gameOver) this.gameTime += deltaTime;// ゲームをカウントダウン
             if (this.gameTime > this.timeLimit) this.gameOver = true;// ゲームをカウントダウン
-            this.player.update();
+            this.player.update(deltaTime);
 
             this.background.update();// レイヤー設定したバックグラウンドを更新
             this.background.layer4.update();// レイヤー4設定したバックグラウンドを更新
@@ -402,6 +448,9 @@ window.addEventListener('load', function(){
                 // 当たり判定、長方形(プレイヤー)の大きさに含まれるかどうか
                 if (this.checkCollsion(this.player, enemy)){
                     enemy.markedForDeletion = true;
+                    // luckyfishと衝突判定でpowerアップする
+                    if(enemy.type = 'lucky') this.player.enterPowerUp();
+                    else this.score--;
                 }
                 // 当たり判定、レーザ発射物と敵
                 this.player.projectiles.forEach(projectile => {
