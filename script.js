@@ -48,12 +48,15 @@ window.addEventListener('load', function(){
             this.height = 3;
             this.speed = 3;
             this.markedForDeletion = false;
+            this.image = document.getElementById('projectile');
         }
         update(){
             this.x += this.speed;
             if (this.x > this.game.width * 0.8) this.markedForDeletion = true;
         }
         draw(context){
+            //context.drawImage(this.image, this.x, this.y);
+            //下記はcanvasで描いたもの
             context.fillStyle = 'yellow';
             context.fillRect(this.x, this.y, this.width, this.height);
         }
@@ -87,7 +90,7 @@ window.addEventListener('load', function(){
             this.projectiles = [];
 
             // パワーアップの定義
-            this.powerUp = false; // 最初はパワーアップしない
+            this.powerUp = false; // 最初からパワーアップしない
             this.powerUpTimer = 0;
             this.powerUpLimit = 10000;
 
