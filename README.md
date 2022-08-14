@@ -1,6 +1,10 @@
 # JavaScript_2D_Game_Tutorial
 https://risarisato.github.io/JavaScript_2D_Game_Tutorial/
 
+-Particle effects and physicsは難しいのでスクショのみ
+![image](https://user-images.githubusercontent.com/88628553/184538361-edac7da2-da27-469f-9d66-fbe4d687e68b.png)
+
+
 -発射物レーザの描画
 ![image](https://user-images.githubusercontent.com/88628553/184477691-10c0a2fe-2059-4b17-834e-28ab02c4d997.png)
 
