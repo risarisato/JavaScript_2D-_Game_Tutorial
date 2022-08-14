@@ -62,7 +62,7 @@ window.addEventListener('load', function(){
         }
     }
 
-    // 粒子
+    // 敵に衝突した歯車残骸
     class Particle {
         constructor(game, x, y){
             this.game = game;
@@ -98,7 +98,7 @@ window.addEventListener('load', function(){
 
             // バウンド条件
             // if (this.y > this.game.height - this.bottomBouncedBoundary && !this.bounced){
-                if (this.y > this.game.height - this.bottomBouncedBoundary && !this.bounced < 2){
+                if (this.y > this.game.height - this.bottomBouncedBoundary && this.bounced < 2){
                 //this.bounced = true;
                 this.bounced++;
                 this.speedY *= -0.7;
@@ -514,13 +514,13 @@ window.addEventListener('load', function(){
             // 敵クラスとレーザーの関係
             this.enemies.forEach(enemy => {
                 enemy.update();
-                // 当たり判定、長方形(プレイヤー)の大きさに含まれるかどうか
+                // 当たり判定、自機プレイヤーと衝突
                 if (this.checkCollsion(this.player, enemy)){
                     enemy.markedForDeletion = true;
-                    //発射物レーターにあたり、敵の残骸歯車が10個でる
-                    for(let i = 0; i < 10; i++){
-                        this.particles.push(new Particle(this, enemy.x +
-                             enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+                    // 自機とあたり、敵の残骸歯車が3個でる
+                    for(let i = 0; i < 3; i++){
+                        this.particles.push(new Particle(this, enemy.x + enemy.width
+                        * 0.5, enemy.y + enemy.height * 0.5));
                     }
                     // luckyfishと衝突判定でpowerアップする
                     if(enemy.type = 'lucky') this.player.enterPowerUp();
@@ -531,11 +531,10 @@ window.addEventListener('load', function(){
                     if (this.checkCollsion(projectile, enemy)){
                         enemy.lives--;
                         projectile.markedForDeletion = true;
-                            // 敵に衝突されて破壊された場合
-                            this.particles.push(new Particle(this, enemy.x +
-                                enemy.width * 0.5, enemy.y + enemy.height * 0.5));
-                        // 敵を発射物レーザーで破壊したとき10個の歯車残骸
-                        // 1：54：32あたり復習→自爆や発射物レーザなどで歯車残骸の数を変更できる
+                        this.particles.push(new Particle(this, enemy.x + enemy.width
+                        * 0.5, enemy.y + enemy.height * 0.5));
+
+                        // 敵を発射物レーザーで破壊したとき10個の残骸→自爆やレーザで歯車残骸の数を変更
                         if (enemy.lives <= 0){
                             for(let i = 0; i < 10; i++){
                                 this.particles.push(new Particle(this, enemy.x +
