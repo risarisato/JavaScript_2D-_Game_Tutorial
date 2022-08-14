@@ -1,4 +1,5 @@
 # JavaScript_2D_Game_Tutorial
+https://risarisato.github.io/JavaScript_2D_Game_Tutorial/
 
 -発射物レーザの描画
 ![image](https://user-images.githubusercontent.com/88628553/184477691-10c0a2fe-2059-4b17-834e-28ab02c4d997.png)
@@ -48,6 +49,6 @@ Base enemy class 敵の表記とクラス拡張
 
 やった記録を残してみるsourcetreeやgit resetなどの練習
 Drawing game UI 弾薬数の表示
-https://risarisato.github.io/JavaScript_2D_Game_Tutorial/
+
 
 ![image](https://user-images.githubusercontent.com/88628553/182008301-4edb9db8-01d3-4016-9398-fa9678e6a3b6.png)
