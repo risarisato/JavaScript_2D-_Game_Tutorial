@@ -64,7 +64,57 @@ window.addEventListener('load', function(){
 
     // 粒子
     class Particle {
+        constructor(game, x, y){
+            this.game = game;
+            this.x = x;
+            this.y = y;
+            this.image = document.getElementById('gears');
+            this.frameX = Math.floor(Math.random() * 3);// 歯車のX座標
+            this.frameY = Math.floor(Math.random() * 3);// 歯車のY座標
+            this.spriteSize = 50;// 歯車のサイズは50
+            this.sizeModifiler = (Math.random() * 0.5 + 0.5).toFixed(1);
+            this.size = this.spriteSize * this.sizeModifiler;
+            this.speedX = Math.random() * 6 - 3;// 敵を破壊したときに歯車がx軸に「6」か「3-」で出現
+            this.speedY = Math.random() * -15;// 歯車がY軸方向へ「-15」速さで落ちる
+            this.gravity = 0.5;// 重力
+            this.markedForDeletion = false;// 初期値は発射物レーターは偽
+            this.angle = 0;// 歯車の角度のアングル
+            this.va = Math.random() * 0.2 - 0.1;// 歯車の角度の乱数
+            //this.bounced = false;// バウンドさせない
+            this.bounced = 0;// バウンドが「0」回の初期値
+            this.bottomBouncedBoundary = Math.random() * 100 + 60;// 歯車がバウンド上下の高さ
+        }
+        update(){
+            this.angle += this.va;// vaによる回転角度
+            this.speedY += this.gravity;// 速度Yは重力によって増加
 
+            // ここまで重力の影響を受ける
+            this.x -= this.speedX;
+            this.y += this.speedY;
+
+            // 発射物に当たると歯車はスクロールしている
+            if(this.y > this.game.height + this.size ||
+                this.x < 0 - this.size) this.markedForDeletion = true;
+
+            // バウンド条件
+            // if (this.y > this.game.height - this.bottomBouncedBoundary && !this.bounced){
+                if (this.y > this.game.height - this.bottomBouncedBoundary && !this.bounced < 2){
+                //this.bounced = true;
+                this.bounced++;
+                this.speedY *= -0.7;
+            }
+        }
+        // 粒子画像はグリッドであるためフレームに必要なスプライトシート
+        // 各、粒子で切り取る考え方
+        draw(context){
+            context.drawImage(this.image,
+                                this.frameX * this.spriteSize,
+                                this.frameY * this.spriteSize,
+                                this.spriteSize, this.spriteSize,
+                                this.x,
+                                this.y,
+                                this.size, this.size);
+        }
     }
 
     // プレイヤー
@@ -417,6 +467,7 @@ window.addEventListener('load', function(){
 
             //敵の出現は同じもの使用する「弾薬の間隔」があるので
             this.enemies = [];// 敵クラスの配列を宣言
+            this.particles = [];// 敵を倒した残骸歯車
             this.enemyTimer = 0;// 敵の初期時間は0
             this.enemyInterval = 1000;// 敵のインターバル１秒
 
@@ -454,12 +505,23 @@ window.addEventListener('load', function(){
             } else {
                 this.ammoTimer += deltaTime;
             }
+
+            // 歯車の配列を呼び出す
+            this.particles.forEach(particle => particle.update());
+            // filterメソッドで歯車の配列を置き換える
+            this.particles = this.particles.filter(particle => !particle.markedForDeletion);
+
             // 敵クラスとレーザーの関係
             this.enemies.forEach(enemy => {
                 enemy.update();
                 // 当たり判定、長方形(プレイヤー)の大きさに含まれるかどうか
                 if (this.checkCollsion(this.player, enemy)){
                     enemy.markedForDeletion = true;
+                    //発射物レーターにあたり、敵の残骸歯車が10個でる
+                    for(let i = 0; i < 10; i++){
+                        this.particles.push(new Particle(this, enemy.x +
+                             enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+                    }
                     // luckyfishと衝突判定でpowerアップする
                     if(enemy.type = 'lucky') this.player.enterPowerUp();
                     else this.score--;
@@ -469,8 +531,22 @@ window.addEventListener('load', function(){
                     if (this.checkCollsion(projectile, enemy)){
                         enemy.lives--;
                         projectile.markedForDeletion = true;
+                            // 敵に衝突されて破壊された場合
+                            this.particles.push(new Particle(this, enemy.x +
+                                enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+                        // 敵を発射物レーザーで破壊したとき10個の歯車残骸
+                        // 1：54：32あたり復習→自爆や発射物レーザなどで歯車残骸の数を変更できる
                         if (enemy.lives <= 0){
+                            for(let i = 0; i < 10; i++){
+                                this.particles.push(new Particle(this, enemy.x +
+                                     enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+                            }
                             enemy.markedForDeletion = true;
+
+                            // 発射物レーターにあたり、敵の残骸歯車が10個でる
+                            //for(let i = 0; i < 10; i++){
+                            //this.particles.push(new Particle(this, enemy.x +
+                            //enemy.width * 0.5, enemy.y + enemy.height * 0.5));
                             //this.score+= enemy.score;// カウント完了後に敵を倒しても点数加算される
                             if (!this.gameOver) this.score += enemy.score;// カウント完了後に敵を倒しても点数加算されない
                             if (this.score > this.winningScore) this.gameOver = true;
@@ -495,6 +571,8 @@ window.addEventListener('load', function(){
             this.player.draw(context);
             // 弾薬表示の呼び出し
             this.ui.draw(context);
+            // drawメソッド内でparticle.draw(context)で歯車の配列を渡す
+            this.particles.forEach(particle => particle.draw(context));
             // 敵クラスの呼び出し
             this.enemies.forEach(enemy => {
                 enemy.draw(context);
