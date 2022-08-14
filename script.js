@@ -55,10 +55,10 @@ window.addEventListener('load', function(){
             if (this.x > this.game.width * 0.8) this.markedForDeletion = true;
         }
         draw(context){
-            //context.drawImage(this.image, this.x, this.y);
+            context.drawImage(this.image, this.x, this.y);
             //下記はcanvasで描いたもの
-            context.fillStyle = 'yellow';
-            context.fillRect(this.x, this.y, this.width, this.height);
+            //context.fillStyle = 'yellow';
+            //context.fillRect(this.x, this.y, this.width, this.height);
         }
     }
 
@@ -102,6 +102,13 @@ window.addEventListener('load', function(){
             else if (this.game.keys.includes('ArrowDown')) this.speedY = this.maxSpeed;
             else this.speedY = 0;
             this.y += this.speedY;
+
+            // プレイヤーが画面上下端までいけるようにする
+            if(this.y > this.game.height - this.height * 0.5)
+            this.y = this.game.height - this.height *0.5;
+            else if (this.y < -this.height *0.5)
+            this.y = -this.height * 0.5;
+
             // 発射物の配列を取り出す＞呼び出す
             this.projectiles.forEach(projectile => {
                 projectile.update();
@@ -224,8 +231,10 @@ window.addEventListener('load', function(){
             //context.drawImage(this.image, this.x, this.y);
             //敵ライフを視覚的に見えるようにする
             //context.fillStyle = 'black'; デフォルトで黒らしい
+            if(this.game.debug){
             context.font = '20px Helvatica';
             context.fillText(this.lives, this.x, this.y);
+            }
         }
     }
     // 継承関係の敵キャラクター(Angler1)オーバライド
@@ -330,8 +339,8 @@ window.addEventListener('load', function(){
             // フィールド情報
             this.game = game;
             this.fontSize = 25;
-            this.fontFamily = 'Helvetica';
-            this.color = 'yellow';
+            this.fontFamily = 'Bangers';
+            this.color = 'white';
         }
         // 弾薬・スコア点数を描く
         draw(context){
@@ -373,10 +382,10 @@ window.addEventListener('load', function(){
                     message1 = 'You lose!';
                     message2 = 'Try again next time!';
                 }
-                context.font = '50px ' + this.fontFamily;
-                context.fillText(message1, this.game.width * 0.5, this.game.height * 0.5 - 40);
+                context.font = '70px ' + this.fontFamily;
+                context.fillText(message1, this.game.width * 0.5, this.game.height * 0.5 - 20);
                 context.font = '25px ' + this.fontFamily;
-                context.fillText(message2, this.game.width * 0.5, this.game.height * 0.5 + 40);
+                context.fillText(message2, this.game.width * 0.5, this.game.height * 0.5 + 20);
             }
             // レーザ発射物の残数がパワーアップ時の色が変更される
             context.fillStyle = this.color;
