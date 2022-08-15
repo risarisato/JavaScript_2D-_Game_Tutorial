@@ -82,14 +82,14 @@ window.addEventListener('load', function(){
             this.va = Math.random() * 0.2 - 0.1;// 歯車の角度の乱数
             //this.bounced = false;// バウンドさせない
             this.bounced = 0;// バウンドが「0」回の初期値
-            this.bottomBouncedBoundary = Math.random() * 100 + 60;// 歯車がバウンド上下の高さ
+            this.bottomBouncedBoundary = Math.random() * 80 + 60;// 歯車がバウンド上下の高さ
         }
         update(){
             this.angle += this.va;// vaによる回転角度
             this.speedY += this.gravity;// 速度Yは重力によって増加
 
             // ここまで重力の影響を受ける
-            this.x -= this.speedX;
+            this.x -= this.speedX + this.game.speed;
             this.y += this.speedY;
 
             // 発射物に当たると歯車はスクロールしている
@@ -106,14 +106,23 @@ window.addEventListener('load', function(){
         }
         // 粒子画像はグリッドであるためフレームに必要なスプライトシート
         // 各、粒子で切り取る考え方
+        // 歯車残骸が回転する
         draw(context){
+            context.save();// セーブする
+            context.translate(this.x, this.y);// 歯車の回転の初期値
+            context.rotate(this.angle);// 歯車でangle加算加算
             context.drawImage(this.image,
                                 this.frameX * this.spriteSize,
                                 this.frameY * this.spriteSize,
                                 this.spriteSize, this.spriteSize,
-                                this.x,
-                                this.y,
+                                //this.x,
+                                //this.y,// 歯車の初期値から回転してしまう
+                                //0, これだと歯車から回転してしまう
+                                //0,
+                                this.size * -0.5,// 回転する高さの半分の歯車が中心
+                                this.size * -0.5,
                                 this.size, this.size);
+            context.restore();// セーブする
         }
     }
 
@@ -232,7 +241,10 @@ window.addEventListener('load', function(){
         enterPowerUp(){
             this.powerUpTimer = 0;
             this.powerUp = true;
-            this.game.ammo = this.game.maxAmmo;
+            //this.game.ammo = this.game.maxAmmo;
+            // パワーアップ中だけ最大まで残数が増える→終われば定数の残数
+            if(this.game.ammo < this.game.maxAmmo)
+                this.game.ammo = this.game.maxAmmo;
         }
 
     }
@@ -396,7 +408,7 @@ window.addEventListener('load', function(){
         draw(context){
             context.save();// スコープ内のcontextだけ影を開始＞＞敵ライフ「5」に影なし
             context.fillStyle = this.color;
-            context.shadowOffsetX = 1.5;//影をつけている
+            context.shadowOffsetX = 2;//影をつけている
             context.shadowOffsetY = 2;//影をつけている
             context.shadowColor = 'black';
 
@@ -438,7 +450,7 @@ window.addEventListener('load', function(){
                 context.fillText(message2, this.game.width * 0.5, this.game.height * 0.5 + 20);
             }
             // レーザ発射物の残数がパワーアップ時の色が変更される
-            context.fillStyle = this.color;
+            // context.fillStyle = this.color;
             if(this.game.player.powerUp) context.fillStyle = 'red';// パワーアップ時の表示の色
             for (let i = 0; i < this.game.ammo; i++){
                 // (20, 50)開始位置です。幅は 3 で高さは 20 です。
@@ -486,7 +498,8 @@ window.addEventListener('load', function(){
             this.timeLimit = 15000;
 
             this.speed = 1; // 背景バックグラウンド速度
-            this.debug = true;
+            //this.debug = true;// 最初からデバッグモードが使えるとおかしい
+            this.debug = false;
         }
         // 更新する＞＞動くようにみえるところ
         update(deltaTime){
@@ -523,7 +536,9 @@ window.addEventListener('load', function(){
                         * 0.5, enemy.y + enemy.height * 0.5));
                     }
                     // luckyfishと衝突判定でpowerアップする
-                    if(enemy.type = 'lucky') this.player.enterPowerUp();
+                    //if(enemy.type = 'lucky') this.player.enterPowerUp();
+                    // ラッキーフィッシュの長方形内に別の敵がいると判定できる
+                    if(enemy.type === 'lucky') this.player.enterPowerUp();
                     else this.score--;
                 }
                 // 当たり判定、レーザ発射物と敵
@@ -531,8 +546,10 @@ window.addEventListener('load', function(){
                     if (this.checkCollsion(projectile, enemy)){
                         enemy.lives--;
                         projectile.markedForDeletion = true;
-                        this.particles.push(new Particle(this, enemy.x + enemy.width
-                        * 0.5, enemy.y + enemy.height * 0.5));
+
+                        // 敵に発射物レーザを当てると歯車残骸が1個でる＞＞出さない
+                        //this.particles.push(new Particle(this, enemy.x + enemy.width
+                        //* 0.5, enemy.y + enemy.height * 0.5));
 
                         // 敵を発射物レーザーで破壊したとき10個の残骸→自爆やレーザで歯車残骸の数を変更
                         if (enemy.lives <= 0){
@@ -564,19 +581,19 @@ window.addEventListener('load', function(){
         }
         // 描く順番に注意！上書き：背景＞プレイヤー＝UI＝敵＞レイヤー4
         draw(context){
-            // レイヤー設定したバックグラウンドを描く
+            // ①レイヤー設定したバックグラウンドを描く
             this.background.draw(context);
-            // プレイヤーの呼び出し
-            this.player.draw(context);
-            // 弾薬表示の呼び出し
+            // ②弾薬表示の呼び出し
             this.ui.draw(context);
+            // ③プレイヤーの呼び出し
+            this.player.draw(context);
             // drawメソッド内でparticle.draw(context)で歯車の配列を渡す
             this.particles.forEach(particle => particle.draw(context));
             // 敵クラスの呼び出し
             this.enemies.forEach(enemy => {
                 enemy.draw(context);
             });
-            // レイヤー4を最前列で呼び出す
+            // 最前列にレイヤー4を呼び出す
             this.background.layer4.draw(context);
         }
         // 親super敵クラスの子クラスを呼ぶnew
