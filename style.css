@@ -25,6 +25,6 @@
 /* htmlで表示される：各layer1-4を表示させない
 ＞＞canvas内で表示させるため */
 #layer1, #layer2, #layer3, #layer4, #player, #angler1, #angler2, #lucky,
-#projectile, #gears{
+#projectile, #gears, #hivewhale, #drone {
     display: none;
 }

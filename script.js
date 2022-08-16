@@ -306,7 +306,7 @@ window.addEventListener('load', function(){
             super(game);
             this.width = 228; //* 0.2; 大きさは調整したときの残り
             this.height = 169; //* 0.2;
-            this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.y = Math.random() * (this.game.height * 0.95 - this.height);
             this.image = document.getElementById('angler1');
             this.frameY = Math.floor(Math.random() * 3);
             this.lives = 2;
@@ -320,7 +320,7 @@ window.addEventListener('load', function(){
             super(game);
             this.width = 213;
             this.height = 165;
-            this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.y = Math.random() * (this.game.height * 0.95 - this.height);
             this.image = document.getElementById('angler2');
             this.frameY = Math.floor(Math.random() * 2);
             this.lives = 3;
@@ -333,15 +333,45 @@ window.addEventListener('load', function(){
             super(game);
             this.width = 99;
             this.height = 95;
-            this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.y = Math.random() * (this.game.height * 0.95 - this.height);
             this.image = document.getElementById('lucky');
             this.frameY = Math.floor(Math.random() * 2);
             this.lives = 3;
-            this.score = 15;
+            this.score = 3;
             this.type = 'lucky';
         }
     }
-
+    // 継承関係で大型タイプのhivewhaleをオーバライド
+    class Hivewhale extends Enemy {
+        constructor(game){
+            super(game);
+            this.width = 400;
+            this.height = 227;
+            this.y = Math.random() * (this.game.height * 0.95 - this.height);
+            this.image = document.getElementById('hivewhale');
+            this.frameY = 0;
+            this.lives = 15;
+            this.score = this.lives;
+            this.type = 'hive';
+            this.speed = Math.random() * -1.2 -0.2;
+        }
+    }
+    // 継承関係で大型タイプ敵を破壊したあとに小型のDroneをオーバライド
+    class Drone extends Enemy {
+        constructor(game, x, y){
+            super(game);
+            this.width = 115;
+            this.height = 95;
+            this.x = x;
+            this.y = y;
+            this.image = document.getElementById('drone');
+            this.frameY = Math.floor(Math.random() * 2);
+            this.lives = 3;
+            this.score = this.lives;
+            this.type = 'drone';
+            this.speed = Math.random() * -4.2 -0.5;
+        }
+    }
     // レイヤーオブジェクトの設定するクラス
     class Layer {
         constructor(game, image, speedModifier){
@@ -530,8 +560,8 @@ window.addEventListener('load', function(){
                 // 当たり判定、自機プレイヤーと衝突
                 if (this.checkCollsion(this.player, enemy)){
                     enemy.markedForDeletion = true;
-                    // 自機とあたり、敵の残骸歯車が3個でる
-                    for(let i = 0; i < 3; i++){
+                    // 自機とあたり、敵の残骸歯車が3(enemy.score)個でる
+                    for(let i = 0; i < enemy.score; i++){
                         this.particles.push(new Particle(this, enemy.x + enemy.width
                         * 0.5, enemy.y + enemy.height * 0.5));
                     }
@@ -551,13 +581,23 @@ window.addEventListener('load', function(){
                         //this.particles.push(new Particle(this, enemy.x + enemy.width
                         //* 0.5, enemy.y + enemy.height * 0.5));
 
-                        // 敵を発射物レーザーで破壊したとき10個の残骸→自爆やレーザで歯車残骸の数を変更
+                        // 敵を発射物レーザーで破壊したとき10(enemy.score)個の残骸→自爆やレーザで歯車残骸の数を変更
                         if (enemy.lives <= 0){
-                            for(let i = 0; i < 10; i++){
+                            for(let i = 0; i < enemy.score; i++){
                                 this.particles.push(new Particle(this, enemy.x +
                                      enemy.width * 0.5, enemy.y + enemy.height * 0.5));
                             }
                             enemy.markedForDeletion = true;
+                            // 敵が大型のhivewhaleに発射物レーザで倒したら、droneが5匹でる
+                            if(enemy.type === 'hive'){
+                                for(let i = 0; i < 5; i++){
+                                // droneが同じ座標から5匹でないようにする
+                                this.enemies.push(new Drone(this,
+                                    enemy.x + Math.random() * enemy.width,
+                                    enemy.y + Math.random() * enemy.height + 0.5));
+                                }
+                            }
+
 
                             // 発射物レーターにあたり、敵の残骸歯車が10個でる
                             //for(let i = 0; i < 10; i++){
@@ -599,10 +639,12 @@ window.addEventListener('load', function(){
         // 親super敵クラスの子クラスを呼ぶnew
         addEnemy(){
             const randomize = Math.random();
-            // 0.5のAngler1を出現させて
+            // 0.3のAngler1を出現させて
             if(randomize < 0.3) this.enemies.push(new Angler1(this));
-            // それ以外はAngler2になる
+            // 0.6はAngler2になる
             else if (randomize < 0.6)this.enemies.push(new Angler2(this));
+            // 0.8はHivewhaleになる
+            else if (randomize < 0.8)this.enemies.push(new Hivewhale(this));
             else this.enemies.push(new LuckyFish(this));
             // console.log(this.enemies);
         }
