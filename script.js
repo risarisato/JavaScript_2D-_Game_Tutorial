@@ -443,7 +443,8 @@ window.addEventListener('load', function(){
             context.shadowColor = 'black';
 
             // スコア点数表示
-            context.font = this.fontSize + 'px' + this.fontFamily;
+            // this.fontSize + 'px_' スペースがないと変数を読み込まない
+            context.font = this.fontSize + 'px ' + this.fontFamily;
             context.fillText('Score: ' + this.game.score, 20, 40);
             context.fillText('弾数: ', 140, 40);
 
