@@ -3,9 +3,6 @@ https://risarisato.github.io/JavaScript_2D_Game_Tutorial/
 
 <h5>スコア表示のデバッグモードでのバグの修正</h5>
 <h6>this.fontSize + 'px_' スペースがないと変数を読み込まない</h6>
-![image](https://user-images.githubusercontent.com/88628553/184806440-d02f8b6d-d24c-48a9-994c-c5623788389b.png)
-
-
 
 - HiveWhale & Drone enemy class_大型敵を破壊すると5匹の敵がでる
 ![image](https://user-images.githubusercontent.com/88628553/184779764-c7eeba16-52c0-4a59-a2c6-6fbe71690f36.png)
