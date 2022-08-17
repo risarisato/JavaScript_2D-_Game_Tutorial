@@ -4,7 +4,7 @@ window.addEventListener('load', function(){
     const canvas = document.getElementById('canvas1');
     const ctx = canvas.getContext('2d');
     // cssで固定画面サイズに対応させているs
-    canvas.width = 700;
+    canvas.width = 1000;
     canvas.height = 500;
 
     // キーボード操作入力
@@ -350,7 +350,7 @@ window.addEventListener('load', function(){
             this.y = Math.random() * (this.game.height * 0.95 - this.height);
             this.image = document.getElementById('hivewhale');
             this.frameY = 0;
-            this.lives = 15;
+            this.lives = 20;
             this.score = this.lives;
             this.type = 'hive';
             this.speed = Math.random() * -1.2 -0.2;
@@ -466,7 +466,7 @@ window.addEventListener('load', function(){
         constructor(game, x, y){
             super(game, x, y);
             this.image = document.getElementById('smokeExplosion');
-            this.spriteWidth = 200;
+            //this.spriteWidth = 200;
             //this.width = this.spriteWidth;
             //this.height = this.spriteHight;
             //this.x = x - this.width * 0.5;
@@ -577,21 +577,21 @@ window.addEventListener('load', function(){
             this.explosions = [];// 敵を倒した爆発
 
             this.enemyTimer = 0;// 敵の初期時間は0
-            this.enemyInterval = 1000;// 敵のインターバル１秒
+            this.enemyInterval = 1500;// 敵の出現頻度
 
             this.ammo = 20;// 弾薬数初期値
             this.maxAmmo = 50; // 弾薬最大値
             this.ammoTimer = 0; // 弾薬タイマー
-            this.ammoInterval = 500; // 弾薬インターバル
+            this.ammoInterval = 350; // 弾薬インターバル
 
             this.gameOver = false;
 
             this.score = 0; // スコア点数の初期値
-            this.winningScore = 10; // 勝利スコア
+            this.winningScore = 80; // 勝利スコア
 
             // ゲームをカウントダウンで終了するゲームにする
             this.gameTime = 0;
-            this.timeLimit = 15000;
+            this.timeLimit = 30000;
 
             this.speed = 1; // 背景バックグラウンド速度
             //this.debug = true;// 最初からデバッグモードが使えるとおかしい
@@ -643,7 +643,8 @@ window.addEventListener('load', function(){
                     //if(enemy.type = 'lucky') this.player.enterPowerUp();
                     // ラッキーフィッシュの長方形内に別の敵がいると判定できる
                     if(enemy.type === 'lucky') this.player.enterPowerUp();
-                    else this.score--;
+                    // ラッキーフィッシュ以外と当たると減点
+                    else if (!this.gameOver) this.score--;
                 }
                 // 当たり判定、レーザ発射物と敵
                 this.player.projectiles.forEach(projectile => {
@@ -656,13 +657,13 @@ window.addEventListener('load', function(){
                         //* 0.5, enemy.y + enemy.height * 0.5));
 
                         // 敵を発射物レーザーで破壊したとき10(enemy.score)個の残骸→自爆やレーザで歯車残骸の数を変更
-                        this.addExplosion(enemy);
                         if (enemy.lives <= 0){
                             for(let i = 0; i < enemy.score; i++){
                                 this.particles.push(new Particle(this, enemy.x +
                                      enemy.width * 0.5, enemy.y + enemy.height * 0.5));
                             }
                             enemy.markedForDeletion = true;
+                            this.addExplosion(enemy);
                             // 敵が大型のhivewhaleに発射物レーザで倒したら、droneが5匹でる
                             if(enemy.type === 'hive'){
                                 for(let i = 0; i < 5; i++){
@@ -680,6 +681,7 @@ window.addEventListener('load', function(){
                             //enemy.width * 0.5, enemy.y + enemy.height * 0.5));
                             //this.score+= enemy.score;// カウント完了後に敵を倒しても点数加算される
                             if (!this.gameOver) this.score += enemy.score;// カウント完了後に敵を倒しても点数加算されない
+                            // コメント入れれば＞＞勝利スコアになればゲームオーバーになる
                             if (this.score > this.winningScore) this.gameOver = true;
                         }
                     }
@@ -724,7 +726,7 @@ window.addEventListener('load', function(){
             // 0.6はAngler2になる
             else if (randomize < 0.6)this.enemies.push(new Angler2(this));
             // 0.8はHivewhaleになる
-            else if (randomize < 0.8)this.enemies.push(new Hivewhale(this));
+            else if (randomize < 0.7)this.enemies.push(new Hivewhale(this));
             else this.enemies.push(new LuckyFish(this));
             // console.log(this.enemies);
         }
