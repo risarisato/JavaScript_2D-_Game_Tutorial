@@ -1,6 +1,14 @@
 # JavaScript_2D_Game_Tutorial
 https://risarisato.github.io/JavaScript_2D_Game_Tutorial/
 
+- ゲーム完成<br>
+Franks laboratory様<br>
+Youtubeにて学習させて頂きました。<br>
+オブジェクト指向やアニメーションおけるスプライトシート座標とcanvas座標の考え方<br>
+すばらしいチュートリアル学習動画ありがとうございました。<br>
+![image](https://user-images.githubusercontent.com/88628553/185017258-9e144ae3-967f-48d0-b2b9-56bf83f2b25d.png)
+
+
 <h5>スコア表示のデバッグモードでのバグの修正</h5>
 <h6>this.fontSize + 'px_' スペースがないと変数を読み込まない</h6>
 
