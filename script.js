@@ -425,6 +425,69 @@ window.addEventListener('load', function(){
         }
     }
 
+    // 親の爆発クラス
+    class Explosion {
+        constructor(game, x, y){
+            this.game = game;
+            //this.x = x;
+            //this.y = y;
+            this.frameX = 0;
+            this.spriteWidth = 200;
+            this.spriteHight = 200;
+            this.width = this.spriteWidth;
+            this.height = this.spriteHight;
+            this.x = x - this.width * 0.5;
+            this.y = y - this.height * 0.5;
+            this.fps = 30;
+            this.timer = 0;
+            this.interval = 1000/this.fps;
+            this.markedForDeletion = false;
+            this.maxFrame = 8;
+        }
+        update(deltaTime){
+            this.x -= this.game.speed // 爆風のスクロール
+            if(this.timer > this.interval){
+                this.frameX++;
+                this.timer = 0;
+            } else {
+                this.timer += deltaTime;
+            }
+            // 爆風配列に、爆風がたまり続けるため
+            if(this.frameX > this.maxFrame) this.markedForDeletion = true;
+        }
+        draw(context){
+            context.drawImage(this.image, this.frameX * this.spriteWidth, 0,
+                 this.spriteWidth, this.spriteHight, this.x, this.y, this.width, this.height);
+        }
+    }
+
+    // 子の「煙」の爆発クラス
+    class SmokeExplosion extends Explosion{
+        constructor(game, x, y){
+            super(game, x, y);
+            this.image = document.getElementById('smokeExplosion');
+            this.spriteWidth = 200;
+            //this.width = this.spriteWidth;
+            //this.height = this.spriteHight;
+            //this.x = x - this.width * 0.5;
+            //this.y = y - this.height * 0.5;
+        }
+    }
+
+    // 子の「火」の爆発クラス
+    class FireExplosion extends Explosion{
+        constructor(game, x, y){
+            super(game, x, y);
+            this.image = document.getElementById('fireExplosion');
+            //this.spriteWidth = 200;
+            //this.width = this.spriteWidth;
+            //this.height = this.spriteHight;
+            //this.x = x - this.width * 0.5;
+            //this.y = y - this.height * 0.5;
+        }
+
+    }
+
     // 弾薬数タイマーやカウントダウンを表示
     class UI {
         constructor(game){
@@ -511,6 +574,8 @@ window.addEventListener('load', function(){
             //敵の出現は同じもの使用する「弾薬の間隔」があるので
             this.enemies = [];// 敵クラスの配列を宣言
             this.particles = [];// 敵を倒した残骸歯車
+            this.explosions = [];// 敵を倒した爆発
+
             this.enemyTimer = 0;// 敵の初期時間は0
             this.enemyInterval = 1000;// 敵のインターバル１秒
 
@@ -555,12 +620,20 @@ window.addEventListener('load', function(){
             // filterメソッドで歯車の配列を置き換える
             this.particles = this.particles.filter(particle => !particle.markedForDeletion);
 
+            // 爆風の配列を呼び出す
+            this.explosions.forEach(explosion=> explosion.update(deltaTime));
+            // filterメソッドで爆風の配列を置き換える
+            this.explosions = this.explosions.filter(explosion => !explosion.markedForDeletion);
+
+
             // 敵クラスとレーザーの関係
             this.enemies.forEach(enemy => {
                 enemy.update();
                 // 当たり判定、自機プレイヤーと衝突
                 if (this.checkCollsion(this.player, enemy)){
                     enemy.markedForDeletion = true;
+                    // 敵を倒すと爆風がでる
+                    this.addExplosion(enemy);
                     // 自機とあたり、敵の残骸歯車が3(enemy.score)個でる
                     for(let i = 0; i < enemy.score; i++){
                         this.particles.push(new Particle(this, enemy.x + enemy.width
@@ -583,6 +656,7 @@ window.addEventListener('load', function(){
                         //* 0.5, enemy.y + enemy.height * 0.5));
 
                         // 敵を発射物レーザーで破壊したとき10(enemy.score)個の残骸→自爆やレーザで歯車残骸の数を変更
+                        this.addExplosion(enemy);
                         if (enemy.lives <= 0){
                             for(let i = 0; i < enemy.score; i++){
                                 this.particles.push(new Particle(this, enemy.x +
@@ -634,6 +708,11 @@ window.addEventListener('load', function(){
             this.enemies.forEach(enemy => {
                 enemy.draw(context);
             });
+            // 爆風クラスの呼び出し
+            this.explosions.forEach(explosion => {
+                explosion.draw(context);
+            });
+
             // 最前列にレイヤー4を呼び出す
             this.background.layer4.draw(context);
         }
@@ -648,6 +727,18 @@ window.addEventListener('load', function(){
             else if (randomize < 0.8)this.enemies.push(new Hivewhale(this));
             else this.enemies.push(new LuckyFish(this));
             // console.log(this.enemies);
+        }
+        // 爆風と火の呼び出し＞ランダム
+        addExplosion(enemy){
+            const randomize = Math.random();
+            if(randomize < 0.5) {
+                this.explosions.push(new SmokeExplosion
+                    (this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+            } else {
+                this.explosions.push(new FireExplosion
+                    (this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+            }
+            //console.log(this.explosions);
         }
         // 当たり判定、長方形(プレイヤー)の大きさに含まれるかどうか
         checkCollsion(recr1, rect2){
@@ -668,8 +759,9 @@ window.addEventListener('load', function(){
         // console.log(deltaTime);
         lastTime = timeStamp;
         ctx.clearRect(0, 0, canvas.width, canvas.height);// アニメーションがクリアされる
-        game.update(deltaTime);// game.update()に引数deltaTimeを入れる
         game.draw(ctx);
+        game.update(deltaTime);// game.update()に引数deltaTimeを入れる
+        //game.draw(ctx);
         requestAnimationFrame(animate);
     }
     animate(0);// animate(0)引数に「0」を入れる
